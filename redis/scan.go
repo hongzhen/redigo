@@ -15,7 +15,9 @@
 package redis
 
 import (
+	"encoding"
 	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -68,8 +70,18 @@ func convertAssignBytes(d reflect.Value, s []byte) (err error) {
 			err = nil
 			return
 		} else if d.CanAddr() {
-			if dc, ok := d.Addr().Interface().(gob.GobDecoder); ok {
+			addr := d.Addr().Interface()
+
+			if dc, ok := addr.(gob.GobDecoder); ok {
 				if err = dc.GobDecode(buf); err == nil {
+					return nil
+				}
+			} else if dc, ok := addr.(json.Unmarshaler); ok {
+				if err = dc.UnmarshalJSON(buf); err == nil {
+					return nil
+				}
+			} else if dc, ok := addr.(encoding.BinaryUnmarshaler); ok {
+				if err = dc.UnmarshalBinary(buf); err == nil {
 					return nil
 				}
 			}
@@ -523,8 +535,19 @@ func flattenStruct(args Args, v reflect.Value) Args {
 	for _, fs := range ss.l {
 		fv := v.FieldByIndex(fs.index)
 		if fv.CanAddr() {
-			if ec, ok := fv.Addr().Interface().(gob.GobEncoder); ok {
+			addr := fv.Addr().Interface()
+			if ec, ok := addr.(gob.GobEncoder); ok {
 				if buf, err := ec.GobEncode(); err == nil {
+					args = append(args, fs.name, buf)
+					return args
+				}
+			} else if ec, ok := addr.(json.Marshaler); ok {
+				if buf, err := ec.MarshalJSON(); err == nil {
+					args = append(args, fs.name, buf)
+					return args
+				}
+			} else if ec, ok := addr.(encoding.BinaryMarshaler); ok {
+				if buf, err := ec.MarshalBinary(); err != nil {
 					args = append(args, fs.name, buf)
 					return args
 				}
