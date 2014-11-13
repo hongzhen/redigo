@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hongzhen/redigo/internal/redistest"
 	"github.com/hongzhen/redigo/redis"
 )
 
@@ -34,7 +35,7 @@ func ExampleScript(c redis.Conn, reply interface{}, err error) {
 }
 
 func TestScript(t *testing.T) {
-	c, err := redis.DialTestDB()
+	c, err := redistest.Dial()
 	if err != nil {
 		t.Fatalf("error connection to database, %v", err)
 	}

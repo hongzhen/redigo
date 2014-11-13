@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hongzhen/redigo/internal/redistest"
 	"github.com/hongzhen/redigo/redis"
 )
 
@@ -110,7 +111,7 @@ func expectPushed(t *testing.T, c redis.PubSubConn, message string, expected int
 }
 
 func TestPushed(t *testing.T) {
-	pc, err := redis.DialTestDB()
+	pc, err := redistest.Dial()
 	if err != nil {
 		t.Fatalf("error connection to database, %v", err)
 	}
